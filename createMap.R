@@ -99,3 +99,15 @@ gsMap <- gsMap + geom_point(data = sites.df,
            aes(x = coords.x1, y=coords.x2),
            colour = "black", size = 1) 
 gsMap
+
+#trying to union regions together
+ne <- regions[['NE']]
+
+#need to do zero buffer
+ne <- gBuffer(ne, byid=TRUE, width=0)
+union_ne <- gUnaryUnion(ne)
+plot(union_ne) #is fine
+
+gsMap <-  gsMap + geom_polygon(aes(x = long, y = lat, group = group),
+                               data = union_ne, fill = NA,
+                                alpha = 0.5, color = "orange")
