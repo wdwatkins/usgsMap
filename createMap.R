@@ -4,6 +4,7 @@ library(maptools)
 library(sp)
 library(ggplot2)
 library(magrittr)
+library(rgeos)
 
 source('mapHelper.R')
 mapData <- read_excel('Map Data.xlsx')
@@ -76,29 +77,37 @@ regions <- list( NE = states.out[c('maine', 'new hampshire', 'vermont',
                                    "montana", "wyoming")],
                  AK = states.out[c("AK")])
 
-colors <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+colors <- c("#E69F0080", "#56B4E980", "#009E7380", "#F0E44280", "#0072B280", "#D55E0080", "#CC79A780")
 regionNames <- c("NE", "SE", "SW", "MW", "PAC", "NW", "AK")
 color_region_df <- data.frame(regionNames, colors, stringsAsFactors = FALSE)
-gsMap <- ggplot() +
-  # geom_polygon(aes(x = long, y = lat, group = group),
-  #              data = tri, fill = "blue",
-  #              alpha = 0.5, color = "white") +
-  theme_minimal() +
-  theme(panel.grid = element_blank(),
-        axis.text = element_blank(),
-        axis.title = element_blank()) 
-
+# gsMap <- ggplot() +
+#   # geom_polygon(aes(x = long, y = lat, group = group),
+#   #              data = tri, fill = "blue",
+#   #              alpha = 0.5, color = "white") +
+#   theme_minimal() +
+#   theme(panel.grid = element_blank(),
+#         axis.text = element_blank(),
+#         axis.title = element_blank()) 
+dev.off()
+plot(states.out, border = "white") #get blank map set up
 for(i in 1:nrow(color_region_df)) {
-  gsMap <- gsMap + geom_polygon(aes(x = long, y = lat, group = group),
-                                      data = regions[[color_region_df$regionName[i]]], 
-                        fill = color_region_df$color[i],
-                                      alpha = 0.5, color = "white")
+  # gsMap <- gsMap + geom_polygon(aes(x = long, y = lat, group = group),
+  #                                     data = regions[[color_region_df$regionName[i]]], 
+  #                       fill = color_region_df$color[i],
+  #                                     alpha = 0.5, color = "white")
+  if(i == 1){
+    plot(regions[[color_region_df$regionName[i]]], col = color_region_df$color[i],
+         border = "white", add = TRUE)
+  } else{
+    plot(regions[[color_region_df$regionName[i]]], col = color_region_df$color[i],
+         border = "white", add = TRUE)
+  }
 }
 
-gsMap <- gsMap + geom_point(data = sites.df,
-           aes(x = coords.x1, y=coords.x2),
-           colour = "black", size = 1) 
-gsMap
+# gsMap <- gsMap + geom_point(data = sites.df,
+#            aes(x = coords.x1, y=coords.x2),
+#            colour = "black", size = 1) 
+# gsMap
 
 #trying to union regions together
 ne <- regions[['NE']]
@@ -106,8 +115,18 @@ ne <- regions[['NE']]
 #need to do zero buffer
 ne <- gBuffer(ne, byid=TRUE, width=0)
 union_ne <- gUnaryUnion(ne)
-plot(union_ne) #is fine
 
-gsMap <-  gsMap + geom_polygon(aes(x = long, y = lat, group = group),
-                               data = union_ne, fill = NA,
-                                alpha = 0.5, color = "orange")
+# gsMap <-  gsMap + geom_polygon(aes(x = long, y = lat, group = group),
+#                                data = union_ne, fill = NA,
+#                                 alpha = 0.5, color = "orange")
+
+#create merged WSC polygons from states out
+#going to remove states to merge, union them, then add them back as single shapes
+wscPolyies <- states.out
+sample <- c("wisconsin", "minnesota", "michigan")
+asString <- paste(sample, collapse = "|")
+toUnion <- states.out[grepl(pattern = asString, x = names(states.out))]
+#need to buffer
+toUnion <- gBuffer(toUnion, byid=TRUE, width=0)
+unionedWSC <- gUnaryUnion(toUnion)
+
