@@ -5,7 +5,7 @@ library(sp)
 library(ggplot2)
 library(magrittr)
 library(rgeos)
-
+rm(list = ls())
 source('mapHelper.R')
 mapData <- read_excel('Map Data.xlsx')
 
@@ -88,7 +88,7 @@ color_region_df <- data.frame(regionNames, colors, stringsAsFactors = FALSE)
 #   theme(panel.grid = element_blank(),
 #         axis.text = element_blank(),
 #         axis.title = element_blank()) 
-dev.off()
+#dev.off()
 plot(states.out, border = "white") #get blank map set up
 for(i in 1:nrow(color_region_df)) {
   # gsMap <- gsMap + geom_polygon(aes(x = long, y = lat, group = group),
@@ -123,10 +123,34 @@ union_ne <- gUnaryUnion(ne)
 #create merged WSC polygons from states out
 #going to remove states to merge, union them, then add them back as single shapes
 wscPolyies <- states.out
-sample <- c("wisconsin", "minnesota", "michigan")
-asString <- paste(sample, collapse = "|")
-toUnion <- states.out[grepl(pattern = asString, x = names(states.out))]
-#need to buffer
-toUnion <- gBuffer(toUnion, byid=TRUE, width=0)
-unionedWSC <- gUnaryUnion(toUnion)
+combinedWSC <- list( UPGL = c("wisconsin", "minnesota", "michigan"),
+                     WVVA = c("west virginia", "virginia"),
+                     DAK = c("north dakota", "south dakota"),
+                     INKYOH = c("indiana", 'kentucky', 'ohio'),
+                     MTWY = c("montana", "wyoming"),
+                     LMG = c("louisiana", "arkansas", "mississippi", "alabama",
+                             "tennessee"),
+                     SA = c("north carolina", "south carolina", "georgia"),
+                     FLCA = c("PR", "florida"),
+                     NE = c("maine", "rhode island", "connecticut",
+                            "vermont", "new hampshire"),
+                     ILIA = c("illinois", "iowa"),
+                     MDDEDC = c("district of columbia", "delaware", "maryland"))
 
+combineStates <- function(states, spatialPoly, wsc_name) {
+  asString <- paste(states, collapse = "|")
+  toUnion <- spatialPoly[grepl(pattern = asString, x = names(spatialPoly))]
+  #need to buffer
+  toUnion <- gBuffer(toUnion, byid=TRUE, width=0)
+  unionedWSC <- gUnaryUnion(toUnion)
+  unionedWSC <- spChFIDs(unionedWSC, wsc_name)
+  withoutUnion <- spatialPoly[!grepl(pattern = asString, x = names(spatialPoly))]
+  appended <- rbind(withoutUnion, unionedWSC)
+  return(appended)
+}
+
+for(i in 1:length(combinedWSC)) {
+  wsc <- combinedWSC[[i]]
+  wsc_name <- names(combinedWSC)[i]
+  wscPolyies <- combineStates(wsc, wscPolyies, wsc_name)
+}
