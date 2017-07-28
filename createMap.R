@@ -1,13 +1,12 @@
-library(readxl)
 library(maps)
 library(maptools)
 library(sp)
 library(ggplot2)
-library(magrittr)
+library(dplyr)
 library(rgeos)
 rm(list = ls())
 source('mapHelper.R')
-mapData <- read_excel('Map Data.xlsx')
+mapData <- read.csv('wma_locations.csv', stringsAsFactors = FALSE)
 
 #need to set state for carribbean WSC
 mapData$STATE[mapData$CITY == "GUAYNABO"] <- "PR"
@@ -89,6 +88,9 @@ color_region_df <- data.frame(regionNames, colors, stringsAsFactors = FALSE)
 #         axis.text = element_blank(),
 #         axis.title = element_blank()) 
 #dev.off()
+png('wscMap.png', units = "in", width = 11, height = 8.5, res = 300)
+
+#pdf('wscMap.pdf', width = 11, height = 8.5)
 plot(states.out, border = "white") #get blank map set up
 for(i in 1:nrow(color_region_df)) {
   # gsMap <- gsMap + geom_polygon(aes(x = long, y = lat, group = group),
@@ -104,25 +106,9 @@ for(i in 1:nrow(color_region_df)) {
   }
 }
 
-# gsMap <- gsMap + geom_point(data = sites.df,
-#            aes(x = coords.x1, y=coords.x2),
-#            colour = "black", size = 1) 
-# gsMap
-
-#trying to union regions together
-ne <- regions[['NE']]
-
-#need to do zero buffer
-ne <- gBuffer(ne, byid=TRUE, width=0)
-union_ne <- gUnaryUnion(ne)
-
-# gsMap <-  gsMap + geom_polygon(aes(x = long, y = lat, group = group),
-#                                data = union_ne, fill = NA,
-#                                 alpha = 0.5, color = "orange")
-
 #create merged WSC polygons from states out
 #going to remove states to merge, union them, then add them back as single shapes
-wscPolyies <- states.out
+#wscPolyies <- states.out
 combinedWSC <- list( UPGL = c("wisconsin", "minnesota", "michigan"),
                      WVVA = c("west virginia", "virginia"),
                      DAK = c("north dakota", "south dakota"),
@@ -133,24 +119,38 @@ combinedWSC <- list( UPGL = c("wisconsin", "minnesota", "michigan"),
                      SA = c("north carolina", "south carolina", "georgia"),
                      FLCA = c("PR", "florida"),
                      NE = c("maine", "rhode island", "connecticut",
-                            "vermont", "new hampshire"),
+                            "vermont", "new hampshire", "massachusetts"),
                      ILIA = c("illinois", "iowa"),
                      MDDEDC = c("district of columbia", "delaware", "maryland"))
 
-combineStates <- function(states, spatialPoly, wsc_name) {
-  asString <- paste(states, collapse = "|")
-  toUnion <- spatialPoly[grepl(pattern = asString, x = names(spatialPoly))]
-  #need to buffer
-  toUnion <- gBuffer(toUnion, byid=TRUE, width=0)
-  unionedWSC <- gUnaryUnion(toUnion)
-  unionedWSC <- spChFIDs(unionedWSC, wsc_name)
-  withoutUnion <- spatialPoly[!grepl(pattern = asString, x = names(spatialPoly))]
-  appended <- rbind(withoutUnion, unionedWSC)
-  return(appended)
-}
 
+
+
+#wscPolyies <- NA
+wscPolyies <- states.out
 for(i in 1:length(combinedWSC)) {
   wsc <- combinedWSC[[i]]
   wsc_name <- names(combinedWSC)[i]
-  wscPolyies <- combineStates(wsc, wscPolyies, wsc_name)
+  #wscPolyies <- combineStatesWSCOnly(states = wsc, appendSpatialPoly = wscPolyies,
+  #                                   allUSPoly = states.out, wsc_name)
+  wscPolyies <- combineStatesWithUS(states = wsc, spatialPoly = wscPolyies, wsc_name = wsc_name)
 }
+plot(wscPolyies, add = TRUE, border = "darkgray", lwd = 3)
+# wscPolyies <- gBuffer(wscPolyies, byid = TRUE, width = 0)
+# borders = gDifference(
+#       as(wscPolyies,"SpatialLines"),
+#       as(gUnaryUnion(wscPolyies),"SpatialLines"),
+#       byid=TRUE)
+
+regionHQs <- sites.df[mapData$REGIONAL_HQ,]
+wsc_pts <- sites.df[!is.na(mapData$WSC_director),]
+#points(regionHQs, pch = 23, cex = 1.5, col = "yellow")
+
+coordinates(regionHQs) <-  ~coords.x1+coords.x2
+coordinates(wsc_pts) <-  ~coords.x1+coords.x2
+plot(regionHQs, pch = 23, cex = 2, bg = "yellow", add = TRUE)
+plot(wsc_pts, pch = 21, bg="blue", add = TRUE )
+legend("top", legend = c("Regional HQ", "WSC Director", "WSC boundary"),
+       pch = c(23, 21, NA), pt.bg = c("yellow", "blue", NA), bty = "n",
+       lty = c(NA, NA, 1), lwd = c(NA, NA, 3), col = c(NA, NA, "darkgray"))
+dev.off()
