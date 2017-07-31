@@ -18,9 +18,9 @@ conus <- to_sp('state')
 
 # -- if moving any more states, do it here: --
 move_variables <- list(
-  AK = list(scale=0.6, shift = c(40,-450), rotate=-50),
-  HI = list(scale=1, shift=c(520, -110), rotate=-35),
-  PR = list(scale=2.5, shift = c(-140, 90), rotate=20)
+  AK = list(scale=0.4, shift = c(70,-480), rotate=-50),
+  HI = list(scale=1, shift=c(310, 0), rotate=-35),
+  PR = list(scale=2.5, shift = c(-250, 10), rotate=20)
 )
 
 stuff_to_move <- list(
@@ -152,5 +152,26 @@ plot(regionHQs, pch = 23, cex = 2, bg = "yellow", add = TRUE)
 plot(wsc_pts, pch = 21, bg="blue", add = TRUE )
 legend("top", legend = c("Regional HQ", "WSC Director", "WSC boundary"),
        pch = c(23, 21, NA), pt.bg = c("yellow", "blue", NA), bty = "n",
-       lty = c(NA, NA, 1), lwd = c(NA, NA, 3), col = c(NA, NA, "darkgray"))
+       lwd = c(1, 1, 3), col = c("black", "black", "darkgray"), 
+       lty = c(NA, NA, 1))
+
+#boxes around moved states
+#alaska
+rect(xleft = grconvertX(0.12, from = "npc"), 
+     ybottom = grconvertY(0.15, from = "npc"), 
+     xright = grconvertX(0.35, from = "npc"), 
+     ytop = grconvertY(0.34, from = "npc"))
+
+#hawaii
+rect(xleft = grconvertX(0.01, from = "npc"), 
+     ybottom = grconvertY(0.42, from = "npc"), 
+     xright = grconvertX(0.18, from = "npc"), 
+     ytop = grconvertY(0.55, from = "npc"))
+
+#puerto rico
+rect(xleft = grconvertX(0.63, from = "npc"), 
+     ybottom = grconvertY(0.15, from = "npc"), 
+     xright = grconvertX(0.78, from = "npc"), 
+     ytop = grconvertY(0.24, from = "npc"))
+
 dev.off()
