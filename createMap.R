@@ -18,8 +18,8 @@ conus <- to_sp('state')
 
 # -- if moving any more states, do it here: --
 move_variables <- list(
-  AK = list(scale=0.4, shift = c(70,-480), rotate=-50),
-  HI = list(scale=1, shift=c(310, 0), rotate=-35),
+  AK = list(scale=0.4, shift = c(130,-490), rotate=-50),
+  HI = list(scale=1, shift=c(365, -50), rotate=-35),
   PR = list(scale=2.5, shift = c(-250, 10), rotate=20)
 )
 
@@ -88,9 +88,9 @@ color_region_df <- data.frame(regionNames, colors, stringsAsFactors = FALSE)
 #         axis.text = element_blank(),
 #         axis.title = element_blank()) 
 #dev.off()
-png('wscMap.png', units = "in", width = 11, height = 8.5, res = 300)
+#png('wscMap.png', units = "in", width = 11, height = 8.5, res = 300)
 
-#pdf('wscMap.pdf', width = 11, height = 8.5)
+pdf('wscMap.pdf', width = 11, height = 8.5)
 plot(states.out, border = "white") #get blank map set up
 for(i in 1:nrow(color_region_df)) {
   # gsMap <- gsMap + geom_polygon(aes(x = long, y = lat, group = group),
@@ -135,7 +135,17 @@ for(i in 1:length(combinedWSC)) {
   #                                   allUSPoly = states.out, wsc_name)
   wscPolyies <- combineStatesWithUS(states = wsc, spatialPoly = wscPolyies, wsc_name = wsc_name)
 }
+
+UPGL_polygon <- wscPolyies['UPGL']
+wscPolyies <- wscPolyies[!grepl(pattern = "UPGL", x = names(wscPolyies))]
 plot(wscPolyies, add = TRUE, border = "darkgray", lwd = 3)
+
+#kinda hacky solution to eliminate Lake MI shoreline
+UPGL_lines <- as(UPGL_polygon, "SpatialLines")
+UPGL_lines@lines[[1]]@Lines[[1]]@coords <- UPGL_lines@lines[[1]]@Lines[[1]]@coords[c(178:370, 1:16),]
+UPGL_lines@lines[[1]]@Lines[[2]]@coords <- UPGL_lines@lines[[1]]@Lines[[2]]@coords[1:660,]
+plot(UPGL_lines, add = TRUE, col = "darkgray", lwd = 3)
+
 # wscPolyies <- gBuffer(wscPolyies, byid = TRUE, width = 0)
 # borders = gDifference(
 #       as(wscPolyies,"SpatialLines"),
@@ -153,25 +163,25 @@ plot(wsc_pts, pch = 21, bg="blue", add = TRUE )
 legend("top", legend = c("Regional HQ", "WSC Director", "WSC boundary"),
        pch = c(23, 21, NA), pt.bg = c("yellow", "blue", NA), bty = "n",
        lwd = c(1, 1, 3), col = c("black", "black", "darkgray"), 
-       lty = c(NA, NA, 1))
+       lty = c(NA, NA, 1), pt.cex = c(2,1, 1))
 
 #boxes around moved states
 #alaska
-rect(xleft = grconvertX(0.12, from = "npc"), 
-     ybottom = grconvertY(0.15, from = "npc"), 
-     xright = grconvertX(0.35, from = "npc"), 
-     ytop = grconvertY(0.34, from = "npc"))
+rect(xleft = grconvertX(0.15, from = "npc"), 
+     ybottom = grconvertY(0.05, from = "npc"), 
+     xright = grconvertX(0.39, from = "npc"), 
+     ytop = grconvertY(0.27, from = "npc"))
 
 #hawaii
-rect(xleft = grconvertX(0.01, from = "npc"), 
-     ybottom = grconvertY(0.42, from = "npc"), 
-     xright = grconvertX(0.18, from = "npc"), 
-     ytop = grconvertY(0.55, from = "npc"))
+rect(xleft = grconvertX(0.02, from = "npc"), 
+     ybottom = grconvertY(0.29, from = "npc"), 
+     xright = grconvertX(0.16, from = "npc"), 
+     ytop = grconvertY(0.43, from = "npc"))
 
 #puerto rico
-rect(xleft = grconvertX(0.63, from = "npc"), 
-     ybottom = grconvertY(0.15, from = "npc"), 
-     xright = grconvertX(0.78, from = "npc"), 
-     ytop = grconvertY(0.24, from = "npc"))
+rect(xleft = grconvertX(0.6, from = "npc"), 
+     ybottom = grconvertY(0.06, from = "npc"), 
+     xright = grconvertX(0.76, from = "npc"), 
+     ytop = grconvertY(0.16, from = "npc"))
 
 dev.off()
