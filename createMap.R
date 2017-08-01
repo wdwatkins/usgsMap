@@ -159,11 +159,12 @@ wsc_pts <- sites.df[!is.na(mapData$WSC_director),]
 coordinates(regionHQs) <-  ~coords.x1+coords.x2
 coordinates(wsc_pts) <-  ~coords.x1+coords.x2
 plot(regionHQs, pch = 23, cex = 2, bg = "yellow", add = TRUE)
-plot(wsc_pts, pch = 21, bg="blue", add = TRUE )
-legend("top", legend = c("Regional HQ", "WSC Director", "WSC boundary"),
-       pch = c(23, 21, NA), pt.bg = c("yellow", "blue", NA), bty = "n",
-       lwd = c(1, 1, 3), col = c("black", "black", "darkgray"), 
-       lty = c(NA, NA, 1), pt.cex = c(2,1, 1))
+plot(wsc_pts, pch = 21, bg="blue", add = TRUE, cex = 1.3 )
+legend(x = grconvertX(0.7, from = "npc"), grconvertY(0.99, from = 'npc'), 
+       legend = c("Regional HQ", "WSC Director", "WSC boundary", "Field office"),
+       pch = c(23, 21, NA, 15), pt.bg = c("yellow", "blue", NA, NA),
+       lwd = c(1, 1, 3), col = c("black", "black", "darkgray", "darkgreen"), 
+       lty = c(NA, NA, 1), pt.cex = c(2,1, 1, 0.6))
 
 #boxes around moved states
 #alaska
@@ -176,7 +177,7 @@ rect(xleft = grconvertX(0.15, from = "npc"),
 rect(xleft = grconvertX(0.02, from = "npc"), 
      ybottom = grconvertY(0.29, from = "npc"), 
      xright = grconvertX(0.16, from = "npc"), 
-     ytop = grconvertY(0.43, from = "npc"))
+     ytop = grconvertY(0.425, from = "npc"))
 
 #puerto rico
 rect(xleft = grconvertX(0.6, from = "npc"), 
@@ -184,4 +185,10 @@ rect(xleft = grconvertX(0.6, from = "npc"),
      xright = grconvertX(0.76, from = "npc"), 
      ytop = grconvertY(0.16, from = "npc"))
 
+fieldOff_logical <- !mapData$REGIONAL_HQ & is.na(mapData$WSC_director)
+fieldOff <- sites.df[fieldOff_logical,]
+coordinates(fieldOff) <-  ~coords.x1+coords.x2
+plot(fieldOff, add = TRUE, pch = 15, col = "darkgreen", cex = 0.6)
+box()
+title(main = "USGS Water Locations, 2017")
 dev.off()
